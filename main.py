@@ -8,6 +8,10 @@ app = Dash(__name__)
 # see https://plotly.com/python/px-arguments/ for more options
 df = pd.read_excel("Vendas.xlsx")
 
+ALLOWED_TYPES = (
+    "search",
+)
+
 # criando o grafico
 fig = px.bar(df, x="Produto", y="Quantidade", color="ID Loja", barmode="group")
 opcoes = list(df['ID Loja'].unique())
@@ -21,7 +25,19 @@ app.layout = html.Div(children=[
     obs: Esse grafico mostra a quantidade de produtos vendidos não o faturamento
     '''),
 
-    dcc.Dropdown(opcoes, value = 'Todas', id='list_lojas'),
+    html.Div(
+        [
+            dcc.Input(
+                id="search",
+                type=_,
+                placeholder="input type {}".format(_),
+            )
+            for _ in ALLOWED_TYPES
+        ]
+        + [html.Div(id="procura-loja")]
+    ),
+
+    dcc.Dropdown(opcoes, value='Todas', id='list_lojas'),
 
     dcc.Graph(
         id='grafico_quantidade_vendas',
@@ -30,17 +46,30 @@ app.layout = html.Div(children=[
 ])
 
 
+# @app.callback(
+#     Output('grafico_quantidade_vendas', 'figure'),
+#     Input('search', 'value')
+# )
+
 @app.callback(
     Output('grafico_quantidade_vendas', 'figure'),
-    Input('list_lojas', 'value')
+    Input('list_lojas', 'value'),
+    Input('search', 'value')
 )
-def update_output(value):
-    if value == "Todas":
+def update_output(loja, search_words):
+    if search_words == "":
         fig = px.bar(df, x="Produto", y="Quantidade", color="ID Loja", barmode="group")
     else:
-        tabela_filtrada = df.loc[df['ID Loja'] == value, :]
+        tabela_filtrada = df.loc[df['ID Loja'] == search_words, :]
         fig = px.bar(tabela_filtrada, x="Produto", y="Quantidade", color="ID Loja", barmode="group")
     return fig
+
+    # if loja == "Todas":
+    #     fig = px.bar(df, x="Produto", y="Quantidade", color="ID Loja", barmode="group")
+    # else:
+    #     tabela_filtrada = df.loc[df['ID Loja'] == loja, :]
+    #     fig = px.bar(tabela_filtrada, x="Produto", y="Quantidade", color="ID Loja", barmode="group")
+    # return fig
 
 
 if __name__ == '__main__':
